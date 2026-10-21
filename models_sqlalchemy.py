@@ -23,6 +23,7 @@ class Personaje(Base):
     hp = Column(Integer, nullable=False)
     ataque = Column(Integer, nullable=False)
     usuario_id = Column(Integer, ForeignKey("usuarios.id"),nullable=False)
+    creado_en = Column(TIMESTAMP, server_default=func.now())
 
     #Relacion inversa
     usuario = relationship("Usuario", back_populates="personajes")
