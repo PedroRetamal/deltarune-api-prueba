@@ -37,7 +37,7 @@ def saludar_personaje(
     if not personaje:
         raise HTTPException(status_code=404, detail="Personaje no encontrado")
 
-    return {"mensaje": f"¡Hola, {personaje.nombre}!"}
+    return {"mensaje": f"¡Hola, {personaje.nombre}! desde main"}
 
 
 
