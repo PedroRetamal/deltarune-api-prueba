@@ -37,9 +37,7 @@ def saludar_personaje(
     if not personaje:
         raise HTTPException(status_code=404, detail="Personaje no encontrado")
 
-    return {"mensaje": f"¡Hola, {personaje.nombre}! desde main v2"}
-
-
+    return {"mensaje": f"¡Hola, {personaje.nombre}! desde main v2 y feature v2 (merge resuelto)"}
 
 # obtener personaje por id (Esto es el READ de CRUD tambien, la R)
 @router.get("/{personaje_id}", response_model=PersonajeOutput)
