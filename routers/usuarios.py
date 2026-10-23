@@ -18,7 +18,7 @@ def get_db():
     finally:
         db.close()
 
-
+#registro
 @router.post("/registro", response_model=UsuarioOutput, status_code=201)
 def registrar_usuario(datos: UsuarioInput, db: Session = Depends(get_db)):
 
