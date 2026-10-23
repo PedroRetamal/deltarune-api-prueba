@@ -119,6 +119,7 @@ def listar_personajes(
     }
 # crear personaje con POST (este es el CREATE del CRUD, osea la C)
 @router.post("", response_model=PersonajeOutput, status_code=201)
+#funcion para crear personaje
 def crear_personaje(
     datos: PersonajeInput, 
     usuario: dict = Depends(verificar_token),
