@@ -2,11 +2,11 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from models.usuario import UsuarioInput, UsuarioOutput, LoginInput, TokenOutput
 from database_sqlalchemy import SessionLocal
+from repositories.usuario_repository import UsuarioRepository
+from services.usuario_service import UsuarioService
+from services.auth_service import AuthService
 from models_sqlalchemy import Usuario
-import bcrypt
-import jwt
-from datetime import datetime, timedelta, timezone
-from config import SECRET_KEY, ALGORITHM, EXPIRACION_MINUTOS
+
 
 router = APIRouter()
 
@@ -22,21 +22,17 @@ def get_db():
 @router.post("/registro", response_model=UsuarioOutput, status_code=201)
 def registrar_usuario(datos: UsuarioInput, db: Session = Depends(get_db)):
 
-    #verificar si el username existe
-    existente = db.query(Usuario).filter(Usuario.username == datos.username).first()
-    if existente:
-        raise HTTPException(status_code=400, detail="Ese username ya está en uso")
+    #crear las capas
+    repo = UsuarioRepository(db)
+    auth_service = AuthService()
+    service = UsuarioService(repo, auth_service)
 
-    #hashear contraseña
-    password_bytes = datos.password.encode("utf-8")
-    hash_bytes = bcrypt.hashpw(password_bytes, bcrypt.gensalt())
-    hash_str = hash_bytes.decode("utf-8")
-
-    #crear usuario y guardarlo
-    nuevo_usuario = Usuario(username=datos.username, password_hash=hash_str)
-    db.add(nuevo_usuario)
-    db.commit()
-    db.refresh(nuevo_usuario)  #una recarga para tener el id y el creado_en
+    #llamar al servicio y manejar las excepciones
+    try:
+        nuevo_usuario = service.registrar(datos.username, datos.password)
+    except ValueError as error:
+        #el servicio lanzó un valueError (username duplicado), asi que convertimos a HTTP
+        raise HTTPException(status_code=400, detail=str(error))
 
     return nuevo_usuario
     
@@ -44,24 +40,17 @@ def registrar_usuario(datos: UsuarioInput, db: Session = Depends(get_db)):
 @router.post("/login", response_model=TokenOutput)
 def login(datos: LoginInput, db: Session = Depends(get_db)):
     
-    #buscar usuario
-    usuario = db.query(Usuario).filter(Usuario.username == datos.username).first()
-    if not usuario:
-        raise HTTPException(status_code=401, detail="credenciales inválidas")
+    #crear capas
+    repo = UsuarioRepository(db)
+    auth_service = AuthService()
+    service = UsuarioService(repo, auth_service)
 
-    #verificar contraseña
-    password_bytes = datos.password.encode("utf-8")
-    hash_bytes = usuario.password_hash.encode("utf-8")
 
-    if not bcrypt.checkpw(password_bytes, hash_bytes):
-        raise HTTPException(status_code=401, detail= "credenciales inválidas")
+    #llamar al servicio
+    resultado = service.login(datos.username, datos.password)
 
-    #generar JWT
-    payload = {
-        "user_id": usuario.id,
-        "username": usuario.username,
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=EXPIRACION_MINUTOS)
-    }
-    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)   
-
-    return {"access_token": token, "token_type": "bearer"} 
+    #si el servicio devuelve none es porque las credenciales son inválidas
+    if not resultado:
+        raise HTTPException(status_code=401, detail="Credenciales inválidas")
+    
+    return resultado
