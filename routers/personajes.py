@@ -5,8 +5,9 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from models.personaje import PersonajeInput, PersonajeOutput
-from models_sqlalchemy import Personaje as PersonajeDB
 from database_sqlalchemy import SessionLocal
+from repositories.personaje_repository import PersonajeRepository
+from services.personaje_service import PersonajeService
 from auth import verificar_token  #importar la verificación del token
 
 router = APIRouter()
@@ -29,15 +30,15 @@ def saludar_personaje(
     usuario: dict = Depends(verificar_token),
     db: Session = Depends(get_db)
 ):
-    personaje = db.query(PersonajeDB).filter(
-        PersonajeDB.id == personaje_id,
-        PersonajeDB.usuario_id == usuario["user_id"]
-    ).first()
+    repo = PersonajeRepository(db)
+    service = PersonajeService(repo)
+
+    personaje = service.obtener(personaje_id, usuario["user_id"])
 
     if not personaje:
         raise HTTPException(status_code=404, detail="Personaje no encontrado")
 
-    return {"mensaje": f"¡Hola, {personaje.nombre}! desde main v2 y feature v2 (merge resuelto)"}
+    return {"mensaje": f"¡Hola, {personaje.nombre}!"}
 
 # obtener personaje por id (Esto es el READ de CRUD tambien, la R)
 @router.get("/{personaje_id}", response_model=PersonajeOutput)
@@ -46,10 +47,10 @@ def obtener_personaje(
     usuario: dict = Depends(verificar_token),
     db: Session = Depends(get_db)
 ):
-    personaje = db.query(PersonajeDB).filter(
-        PersonajeDB.id == personaje_id,
-        PersonajeDB.usuario_id == usuario["user_id"]
-    ).first()
+    repo = PersonajeRepository(db)
+    service = PersonajeService(repo)
+
+    personaje = service.obtener(personaje_id, usuario["user_id"])
 
     if not personaje:
         raise HTTPException(status_code=404, detail="Personaje no encontrado")
@@ -65,20 +66,13 @@ def actualizar_personaje(
     usuario: dict = Depends(verificar_token),
     db: Session = Depends(get_db)
 ):
-    personaje = db.query(PersonajeDB).filter(
-        PersonajeDB.id == personaje_id,
-        PersonajeDB.usuario_id == usuario["user_id"]
-    ).first()
+    repo = PersonajeRepository(db)
+    service = PersonajeService(repo)
+
+    personaje = service.actualizar(personaje_id, datos, usuario["user_id"])
 
     if not personaje:
         raise HTTPException(status_code=404, detail="Personaje no encontrado")
-
-    personaje.nombre = datos.nombre
-    personaje.hp = datos.hp
-    personaje.ataque = datos.ataque
-
-    db.commit()
-    db.refresh(personaje)
 
     return personaje
 
@@ -90,17 +84,15 @@ def borrar_personaje(
     usuario: dict = Depends(verificar_token),
     db: Session = Depends(get_db)
 ):
+    repo = PersonajeRepository(db)
+    service = PersonajeService(repo)
 
-    personaje = db.query(PersonajeDB).filter(
-        PersonajeDB.id == personaje_id,
-        PersonajeDB.usuario_id == usuario["user_id"]
-    ).first()
+    exito = service.borrar(personaje_id, usuario["user_id"])
 
-    if not personaje:
+    if not exito:
         raise HTTPException(status_code=404, detail="Personaje no encontrado")
 
-    db.delete(personaje)
-    db.commit()
+    #204 no lleva cuerpo asi que no debe haber return
 
 
 # listar todos los personajes (Este es el READ de CRUD , la R)
@@ -109,9 +101,10 @@ def listar_personajes(
     usuario: dict = Depends(verificar_token),
     db: Session = Depends(get_db)
 ):
-    personajes = db.query(PersonajeDB).filter(
-        PersonajeDB.usuario_id == usuario["user_id"]
-    ).all()
+    repo = PersonajeRepository(db)
+    service = PersonajeService(repo)
+
+    personajes = service.listar(usuario["user_id"])
 
     return {
         "usuario_actual": usuario["username"],
@@ -125,14 +118,10 @@ def crear_personaje(
     usuario: dict = Depends(verificar_token),
     db: Session = Depends(get_db)
 ):
-    nuevo = PersonajeDB(
-        nombre=datos.nombre,
-        hp=datos.hp,
-        ataque=datos.ataque,
-        usuario_id=usuario["user_id"]
-    )
-    db.add(nuevo)
-    db.commit()
-    db.refresh(nuevo)
+    repo = PersonajeRepository(db)
+    service = PersonajeService(repo)
+
+    nuevo = service.crear(datos, usuario["user_id"])
 
     return nuevo
+
