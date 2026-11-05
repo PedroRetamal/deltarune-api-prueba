@@ -7,10 +7,8 @@ __pycache__/
 .env
 config.py
 
-# Archivos de prueba
-test_*.py
 
-# Base de datos local (si tuvieras archivos sqlite)
+# Base de datos local
 *.sqlite
 
 # Sistema operativo
