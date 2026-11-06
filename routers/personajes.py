@@ -5,23 +5,12 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from models.personaje import PersonajeInput, PersonajeOutput
-from database_sqlalchemy import SessionLocal
+from database_sqlalchemy import SessionLocal, get_db
 from repositories.personaje_repository import PersonajeRepository
 from services.personaje_service import PersonajeService
 from auth import verificar_token  #importar la verificación del token
 
 router = APIRouter()
-
-#dependencia que abre una sesión de base de datos por cada petición
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-
 
 #saludar personajes con una mejor forma de verificar que el personaje exista, adaptado al CRUD de hoy sabado
 @router.get("/{personaje_id}/saludo")

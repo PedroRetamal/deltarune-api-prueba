@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from models.usuario import UsuarioInput, UsuarioOutput, LoginInput, TokenOutput
-from database_sqlalchemy import SessionLocal
+from database_sqlalchemy import SessionLocal, get_db
 from repositories.usuario_repository import UsuarioRepository
 from services.usuario_service import UsuarioService
 from services.auth_service import AuthService
@@ -9,14 +9,6 @@ from models_sqlalchemy import Usuario
 
 
 router = APIRouter()
-
-#dependencia que abre una sesión de base de datos por cada petición
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 #registro
 @router.post("/registro", response_model=UsuarioOutput, status_code=201)
