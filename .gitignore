@@ -14,3 +14,9 @@ config.py
 # Sistema operativo
 .DS_Store
 Thumbs.db
+
+# Cobertura de tests
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
