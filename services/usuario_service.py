@@ -1,8 +1,5 @@
 import bcrypt
-import jwt
-from datetime import datetime, timedelta, timezone
 from repositories.usuario_repository import UsuarioRepository
-from config import SECRET_KEY, ALGORITHM, EXPIRACION_MINUTOS
 from services.auth_service import AuthService
 
 class UsuarioService:

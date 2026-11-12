@@ -1,8 +1,12 @@
+import os
 import jwt
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException
-from config import SECRET_KEY, ALGORITHM, EXPIRACION_MINUTOS
 
+#leer variables de entorno para que docker las pueda usar
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+EXPIRACION_MINUTOS = int(os.getenv("EXPIRACION_MINUTOS", 30))
 
 class AuthService:
     
