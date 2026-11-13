@@ -20,3 +20,6 @@ Thumbs.db
 coverage.xml
 htmlcov/
 .pytest_cache/
+
+# Backups de base de datos
+*.sql
